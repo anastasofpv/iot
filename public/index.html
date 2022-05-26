@@ -1,23 +1,40 @@
 <!DOCTYPE html>
-<html lang='en'>
-<head>
-    <meta charset='utf-8' />
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
     <link rel="icon" href="./assets/favicon.ico" />
     <title>Real Time Drone Telemetry</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1' />
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.0/mapbox-gl.js'></script>
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.0/mapbox-gl.css' rel='stylesheet' />
-    
-    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans"
+      rel="stylesheet"
+    />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
 
-    <link href="https://unpkg.com/video.js/dist/video-js.css" rel="stylesheet">
+    <script
+      src="https://cdn.socket.io/4.3.2/socket.io.min.js"
+      integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs"
+      crossorigin="anonymous"
+    ></script>
+
+    <link
+      href="https://unpkg.com/video.js/dist/video-js.css"
+      rel="stylesheet"
+    />
     <!-- <script src="/socket.io/socket.io.js"></script> -->
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
 
     <script src="https://cdn.plot.ly/plotly-2.8.3.min.js"></script>
-
 
     <style>
       body {
@@ -34,7 +51,7 @@
       }
 
       .marker {
-        background-image: url('./assets/drone-icon.png');
+        background-image: url("./assets/drone-icon.png");
         background-size: cover;
         width: 50px;
         height: 50px;
@@ -59,7 +76,6 @@
         width: 100%;
       }
 
-
       .header span {
         float: left;
         color: black;
@@ -69,7 +85,6 @@
         font-size: 18px;
         line-height: 25px;
         border-radius: 4px;
-        
       }
 
       .header span.logo {
@@ -89,171 +104,171 @@
       }
 
       #heatmap {
-                position: fixed;
-                top: 64px;
-                right: 0px;
-                z-index: 3;
-                visibility: hidden;
+        position: fixed;
+        top: 64px;
+        right: 0px;
+        z-index: 3;
+        visibility: hidden;
       }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id="map"></div>
 
-  <div id='map'></div>
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoiYW5hc3Rhc29mcHYiLCJhIjoiY2t3MnE5bmhsMDN2czJvcGFqazZ1N3d2cyJ9.mrt6W2pYpUIww2BEi93awA";
 
-<script>
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/satellite-v9",
+        // style: 'mapbox://styles/mapbox/streets-v11',
+        center: [21.745491695194154, 38.24949792021122],
+        zoom: 16,
+      });
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiYW5hc3Rhc29mcHYiLCJhIjoiY2t3MnE5bmhsMDN2czJvcGFqazZ1N3d2cyJ9.mrt6W2pYpUIww2BEi93awA';
+      let droneID = 1;
+      let temperature = 25;
 
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/mapbox/satellite-v9',
-  // style: 'mapbox://styles/mapbox/streets-v11',
-  center: [21.745491695194154,38.24949792021122],
-  zoom: 16
-});
+      var el = document.createElement("div");
+      el.className = "marker";
 
-let droneID = 1
-let temperature = 25
+      const popup = new mapboxgl.Popup({ offset: 25 }).setText(
+        `Drone ID: ${droneID} \nTemperature: ${temperature}`
+      );
 
-var el = document.createElement('div');
-el.className = 'marker';
+      const marker1 = new mapboxgl.Marker(el)
+        .setLngLat([21.745491695194154, 38.24949792021122])
+        .setPopup(popup)
+        .addTo(map);
 
-const popup = new mapboxgl.Popup({ offset: 25 })
-  .setText(`Drone ID: ${droneID} \nTemperature: ${temperature}`)
+      realTimeData = async () => {
+        //socket.io connection
+        const socket = io("http://localhost:3000/api/droneData");
 
-const marker1 = new mapboxgl.Marker(el)
-    .setLngLat([21.745491695194154,38.24949792021122])
-    .setPopup(popup)
-    .addTo(map);
+        socket.on("newData", (data) => {
+          console.log(data);
+          marker1.setLngLat([data["point"][0], data["point"][1]]);
+          droneID = data["droneID"];
+          temperature = data["temperature"];
+          popup.setText(`Drone ID: ${droneID} \nTemperature: ${temperature}`);
+        });
+      };
 
+      realTimeData();
+    </script>
 
+    <video-js
+      id="my_video_1"
+      class="vjs-default-skin"
+      controls
+      preload="auto"
+      width="512"
+      height="288"
+    >
+      <source
+        src="http://localhost:8888/drone1/index.m3u8"
+        type="application/x-mpegURL"
+      />
+      <!-- <source src="http://94.64.99.30:8080/hls/test.m3u8" type="application/x-mpegURL"> -->
+    </video-js>
 
-setInterval(async function() {
-    let response = await fetch('http://localhost:3000/api/map')
-    // let response = await fetch('http://94.64.99.30:3000/api/map')
-    
-    response = await response.json()
-    let data = response["data"]
-    console.log(data)
-    marker1.setLngLat([data['point'][0],data['point'][1]])
-    droneID = data['droneID']
-    temperature = data['temperature']
-    popup.setText(`Drone ID: ${droneID} \nTemperature: ${temperature}`)
-}, 500);
+    <script src="https://unpkg.com/video.js/dist/video.js"></script>
+    <script src="https://unpkg.com/@videojs/http-streaming/dist/videojs-http-streaming.js"></script>
 
+    <script>
+      var player = videojs("my_video_1");
+    </script>
 
+    <div
+      style="background-color: rgb(78, 78, 243); z-index: 3"
+      class="d-flex flex-row justify-content-between"
+    >
+      <div style="margin-left: 150px" class="p-2">
+        <button
+          onclick="videoFunc()"
+          id="vid"
+          type="button"
+          class="btn btn-dark btn-lg"
+        >
+          Video
+        </button>
+      </div>
+      <div style="font-size: xx-large; color: black" class="p-2">
+        Project 15
+      </div>
+      <div style="margin-right: 150px" class="p-2">
+        <button
+          onclick="thermalFunc()"
+          id="thermal"
+          type="button"
+          class="btn btn-dark btn-lg"
+        >
+          Thermal Camera
+        </button>
+      </div>
+    </div>
 
-// realTimeData = async () => {
-//     //socket.io connection
-//     const socket = io('http://localhost:5000/api/droneData');
-    
-//     socket.on("newData", (data) =>{
-//         console.log(data)
-//         marker1.setLngLat([data['point'][0],data['point'][1]])
-//         droneID = data['droneID']
-//         temperature = data['temperature']
-//         popup.setText(`Drone ID: ${droneID} \nTemperature: ${temperature}`)
-//     })
-// };
-
-// realTimeData()
-
-
-
-// code from the next step will go here!
-
-</script>
-
-
-  <video-js id="my_video_1" class="vjs-default-skin" controls preload="auto" width="512" height="288">
-    <source src="http://localhost:8888/drone1/index.m3u8" type="application/x-mpegURL">
-    <!-- <source src="http://94.64.99.30:8080/hls/test.m3u8" type="application/x-mpegURL"> -->
-  
-  </video-js>
-  
-  <script src="https://unpkg.com/video.js/dist/video.js"></script>
-  <script src="https://unpkg.com/@videojs/http-streaming/dist/videojs-http-streaming.js"></script>
-  
-  <script>
-    var player = videojs('my_video_1');
-  </script>
-
-
-
-<div style="background-color: rgb(78, 78, 243); z-index: 3;" class="d-flex flex-row justify-content-between">
-  <div style="margin-left: 150px;" class="p-2">
-    <button onclick="videoFunc()" id="vid" type="button" class="btn btn-dark btn-lg">Video</button>
-  </div>
-  <div style="font-size: xx-large; color: black;" class="p-2">Project 15</div>
-  <div style="margin-right: 150px;" class="p-2">
-    <button onclick="thermalFunc()" id="thermal" type="button" class="btn btn-dark btn-lg">Thermal Camera</button>
-  </div>
-</div>
-
-<script>
-  function videoFunc(){
-    let fpvCameraPlayer = document.getElementById("my_video_1");
-    if(fpvCameraPlayer.style.visibility === "visible"){
-      fpvCameraPlayer.style.visibility = "hidden"
-    }
-    else{
-      fpvCameraPlayer.style.visibility = "visible"
-    }
-  }
-</script>
-
-<div id="heatmap"></div>
-
-<script>
-    var points = [
-      {
-          z: [[1, 20, 30], [20, 1, 60], [30, 60, 1]],
-          type: 'heatmap'
+    <script>
+      function videoFunc() {
+        let fpvCameraPlayer = document.getElementById("my_video_1");
+        if (fpvCameraPlayer.style.visibility === "visible") {
+          fpvCameraPlayer.style.visibility = "hidden";
+        } else {
+          fpvCameraPlayer.style.visibility = "visible";
+        }
       }
-    ];
+    </script>
 
-    var layout = {
+    <div id="heatmap"></div>
+
+    <script>
+      var points = [
+        {
+          z: [
+            [1, 20, 30],
+            [20, 1, 60],
+            [30, 60, 1],
+          ],
+          type: "heatmap",
+        },
+      ];
+
+      var layout = {
         autosize: false,
         width: 512,
         height: 288,
         margin: {
-            l: 0,
-            r: 0,
-            b: 0,
-            t: 0,
-            pad: 0
+          l: 0,
+          r: 0,
+          b: 0,
+          t: 0,
+          pad: 0,
         },
-        paper_bgcolor: '#42baff',
-        plot_bgcolor: '#c7c7c7'
-    };
-                
-    Plotly.newPlot('heatmap', points, layout);
+        paper_bgcolor: "#42baff",
+        plot_bgcolor: "#c7c7c7",
+      };
 
-    setInterval(async function() {
-        let response = await fetch('http://localhost:3000/api/thermal')
+      Plotly.newPlot("heatmap", points, layout);
+
+      setInterval(async function () {
+        let response = await fetch("http://localhost:3000/api/thermal");
         // let response = await fetch('http://94.64.99.30:3000/api/thermal')
 
-        response = await response.json()
-        Plotly.restyle('heatmap', {z: [response.z]})
-    }, 500);
+        response = await response.json();
+        Plotly.restyle("heatmap", { z: [response.z] });
+      }, 500);
+    </script>
 
-
-</script>
-
-
-<script>
-  function thermalFunc(){
-    let thermalStats = document.getElementById("heatmap");
-    if(thermalStats.style.visibility === "visible"){
-      thermalStats.style.visibility = "hidden"
-    }
-    else{
-      thermalStats.style.visibility = "visible"
-    }
-  }
-</script>
-
-
-</body>
+    <script>
+      function thermalFunc() {
+        let thermalStats = document.getElementById("heatmap");
+        if (thermalStats.style.visibility === "visible") {
+          thermalStats.style.visibility = "hidden";
+        } else {
+          thermalStats.style.visibility = "visible";
+        }
+      }
+    </script>
+  </body>
 </html>

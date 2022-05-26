@@ -2,24 +2,11 @@
 
 // const { MongoClient } = require('mongodb');
 const { callbackify } = require('util');
+const server = require("../server");
 
 const MongoClient = require('mongodb').MongoClient;
 
 const log = console.log;
-
-const io = require("socket.io")(server,{
-  cors: {
-      origin: ['http://localhost:3000',
-              'http://localhost:3000/index.html',
-              "http://localhost:3000/api/droneData",
-              "http://localhost:3000/api/thermal",
-
-              'http://localhost:5000',
-              'http://localhost:5000/index.html',
-              "http://localhost:5000/api/droneData"
-          ],
-  },
-})
 
 
 // Connection URL
@@ -50,22 +37,6 @@ async function insertDB(data) {
   }
 
 
-
-
-
-
-io.of("/api/droneData").on("connection", (socket) => {
-    console.log("socket.io: User connected: ", socket.id);
-
-    socket.on("disconnect", () => {
-        console.log("socket.io: User disconnected: ", socket.id);
-    });
-});
-
-
-
-
-
 let thermalResult = undefined;
 let mapResult = undefined;
 
@@ -86,6 +57,7 @@ exports.postMap = async function (data,callback) {
     // log(data);
     mapResult = data;
     insertDB(mapResult);
+    server.SocketEmit(mapResult);
     callback(null,1)
 }
 
