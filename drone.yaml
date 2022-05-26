@@ -1,0 +1,39 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+services:
+
+  drone-server:
+    image: drone-server:1.09
+    restart: always
+    ports:
+      - 3000:3000
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: drone-db
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: drone-db
+      ME_CONFIG_MONGODB_SERVER: mongo
+
+  rtsp-server:
+    image: aler9/rtsp-simple-server
+    restart: always
+    ports:
+      - 8554:8554
+      - 1935:1935
+      - 8888:8888
+    environment:
+      RTSP_PROTOCOLS: tcp
