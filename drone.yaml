@@ -39,6 +39,11 @@ services:
     environment:
       RTSP_PROTOCOLS: tcp
 
+  reverse-ssh-tunnel:
+    image: efrecon/rsshd
+    restart: always
+    ports:
+      - 
 
 # volumes:
 #   mongo-data:
