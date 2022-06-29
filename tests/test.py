@@ -5,11 +5,11 @@ import pymongo
 import requests
 
 
-
+N = 10
 
 
 url = "http://localhost:3000/api/map"
-for i in range(10):
+for i in range(N):
     droneID = random.randrange(0,3)
     temperature = random.randrange(16,30)
     if (droneID == 0):
@@ -45,4 +45,7 @@ for x in mycol.find():
     # print(x)
     counter += 1
 
-print(counter)
+if counter == N:
+    return 0
+else: 
+    return 1
