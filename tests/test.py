@@ -33,6 +33,8 @@ def test_post_api(N, url):
             # print(mydict)
             # print("document inserted")
             time.sleep(3)
+            
+            
 
     except Exception as e:
         print("Post Request test FAILED ...   Exiting program")
