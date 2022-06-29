@@ -46,6 +46,14 @@ for x in mycol.find():
     counter += 1
 
 if counter == N:
+    print("Tests passed successfully")
+    time.sleep(2)
     exit(0)
 else: 
+    print("Test FAILED ...")
+    time.sleep(2)
     exit(1)
+
+    
+    
+    
