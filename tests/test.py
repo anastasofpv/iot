@@ -46,6 +46,6 @@ for x in mycol.find():
     counter += 1
 
 if counter == N:
-    return 0
+    exit(0)
 else: 
-    return 1
+    exit(1)
