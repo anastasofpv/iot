@@ -45,7 +45,7 @@ for x in mycol.find():
     # print(x)
     counter += 1
 
-if counter == N+1:
+if counter == N:
     print("Tests passed successfully")
     time.sleep(2)
     exit(0)
